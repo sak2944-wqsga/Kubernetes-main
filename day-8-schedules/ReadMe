@@ -1,0 +1,68 @@
+1. A DaemonSet ensures that a copy of a Pod runs on every (or some) Node in a Kubernetes cluster.
+   When you add a new node to the cluster, the DaemonSet automatically schedules the specified pod on that node.
+   When a node is removed, the DaemonSet cleans up the pod from it.
+
+| Use Case              | Description                                                     | Example                                                    |
+| --------------------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Node Monitoring**   | Collect logs, metrics, or performance data from each node.      | Prometheus Node Exporter, Datadog Agent, Fluentd, Filebeat |
+| **Logging Agents**    | Run a pod on every node to gather logs from containers.         | Fluent Bit / Fluentd                                       |
+| **Network Plugins**   | Manage CNI networking or service mesh components on every node. | Calico, Cilium, Weave Net, Istio sidecar injector          |
+| **Storage Daemons**   | Manage storage volumes or local disks across nodes.             | Ceph, GlusterFS, OpenEBS                                   |
+| **Security Agents**   | Run antivirus or intrusion detection on all nodes.              | Falco, Sysdig Secure                                       |
+| **Custom Node Tasks** | Custom agents for backups, resource tracking, or node labeling. | Internal enterprise tools                                  |
+
+
+
+2. Node selectors are a simple way to control which node(s) a Pod should run on.
+   They are part of Kubernetes scheduling constraints, helping the scheduler decide where to place your pods based on node labels.
+   Here Labeled Node can accept creation of unlabeled pod also but Unlabeled Node cannot accept Labeled pod. Labled pod will always created on Labled Node only.
+  
+   How to Add Labels to Nodes:
+   If your node doesn’t already have a label  :      kubectl label nodes <node-name> env=prod
+   To remove  a label                         :      kubectl label nodes <node-name> env-
+   To  change a label                         :      kubectl label nodes <node-name> env=dev --overwrite 
+
+| Use Case              | Example Label                            | Benefit                                |
+| --------------------- | ---------------------------------------- | -------------------------------------- |
+| Environment isolation | `env=prod`                               | Prevents interference between dev/prod |
+| GPU workloads         | `accelerator=nvidia`                     | Ensures GPU availability               |
+| Zone affinity         | `topology.kubernetes.io/zone=us-east-1a` | Low latency, HA                        |
+| Secure workloads      | `type=secure`                            | Enhanced data isolation                |
+| Cost optimization     | `instance-type=spot`                     | Save money on non-critical tasks       |
+| Compliance            | `kubernetes.io/os=linux`                 | Meet OS/arch or license constraints    |
+
+
+3. Node Affinity is a Kubernetes scheduling rule that tells the scheduler which nodes your pod is allowed (or preferred) to run on — based on node labels. So labe; first before applying.
+   Think of it as a filter or preference mechanism that controls pod placement according to node characteristics like:
+   Hardware (CPU type, GPU presence)
+   Region/zone
+   Environment (prod, dev, staging)
+   Custom tags (e.g., “ssd=true”, “high-memory=true”)
+
+  ⚙️ How Node Affinity Works : It uses node labels and affinity rules defined in the pod spec
+
+| Type                                            | Description                                                                                                                               |
+|-------------------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------- |
+|`requiredDuringSchedulingIgnoredDuringExecution` | The pod **must** be scheduled on a matching node (hard requirement). If no matching node exists → pod stays pending.                      |
+|`preferredDuringSchedulingIgnoredDuringExecution`| The pod **prefers** nodes with matching labels (soft requirement). Scheduler will try to honor it, but can still place the pod elsewhere. |
+
+
+4.Taints and Tolerations
+  They are mechanisms used together to control which Pods can be scheduled on which Nodes.
+  Think of it like this:
+  Taints repel Pods from a Node, while Tolerations allow Pods to “tolerate” those taints.
+
+⚙️ How It Works (Conceptually)
+  You apply a taint on a Node – meaning:
+  "Don’t schedule any Pod here unless it can tolerate this taint."
+  You add a toleration to a Pod – meaning:
+  "This Pod can handle (tolerate) that taint, so it’s allowed to be placed here."
+
+  So, taints = “keep out,”
+  tolerations = “I’m allowed in.”
+  Add a Taint to a Node :  kubectl taint nodes <node-name> key=value:effect    
+    Ex. kubectl taint nodes node1 dedicated=frontend:NoSchedule       
+    NoSchedule → Pod will not be scheduled unless it tolerates the taint.
+    PreferNoSchedule → Try not to schedule Pods, but not strict.
+    NoExecute → Existing Pods without toleration are evicted and new ones aren’t scheduled.
+  
