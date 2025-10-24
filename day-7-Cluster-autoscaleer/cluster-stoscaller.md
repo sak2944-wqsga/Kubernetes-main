@@ -31,17 +31,17 @@ yaml
 Copy code
 containers:
   - name: cluster-autoscaler
-    command:
-      - ./cluster-autoscaler
-      - --v=4
-      - --stderrthreshold=info
-      - --cloud-provider=aws
-      - --skip-nodes-with-local-storage=false
-      - --expander=least-waste
-      - --balance-similar-node-groups
-      - --skip-nodes-with-system-pods=false
-      - --nodes=2:6:ng-af5ac006
-      - --cluster-name=naresh   # ✅ Add your cluster name here
+    - command:
+        - ./cluster-autoscaler
+        - --v=4
+        - --stderrthreshold=info
+        - --cloud-provider=aws
+        - --skip-nodes-with-local-storage=false
+        - --expander=least-waste
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/naresh ###chnage the cluster name in place of naresh my cluster name is naresh
+        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2
+        imagePullPolicy: Always
+        name: cluster-autoscaler
 Save & exit.
 
 4️⃣ Configure IAM Permissions
